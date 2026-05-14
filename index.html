@@ -1088,4 +1088,109 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--bg-soft);color:va
         <div class="step-row"><div class="step-num">5</div><div class="step-content"><strong>Sutton Hoo (Room 41)</strong>Anglo-Saxon ship burial helmet. Quieter than the big rooms.</div></div>  
       </div>  
     </div>  
-    <div class="callo
+    <d</div>
+</div>
+</div><script>
+let currentDay = 1;
+let currentMode = 'sunny';
+
+function updateClock() {
+  const now = new Date();
+
+  const londonTime = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).format(now);
+
+  const londonDate = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short'
+  }).format(now);
+
+  document.getElementById('liveClock').textContent = londonTime;
+  document.getElementById('liveDate').textContent = londonDate;
+}
+
+function showDay(day) {
+
+  currentDay = day;
+
+  document.querySelectorAll('.day-content').forEach(el => {
+    el.classList.add('day-hidden');
+  });
+
+  const active =
+    document.getElementById(`day-${day}-${currentMode}`);
+
+  if (active) {
+    active.classList.remove('day-hidden');
+    active.classList.remove('mode-hidden');
+  }
+
+  document.querySelectorAll('.day-tab').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  const tab =
+    document.querySelectorAll('.day-tab')[day - 1];
+
+  if (tab) {
+    tab.classList.add('active');
+  }
+}
+
+function setMode(mode) {
+
+  currentMode = mode;
+
+  document.querySelectorAll('.day-content').forEach(el => {
+    el.classList.add('day-hidden');
+    el.classList.add('mode-hidden');
+  });
+
+  const active =
+    document.getElementById(`day-${currentDay}-${mode}`);
+
+  if (active) {
+    active.classList.remove('day-hidden');
+    active.classList.remove('mode-hidden');
+  }
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  if (mode === 'sunny') {
+    document.querySelector('.mode-btn.sunny')
+      .classList.add('active');
+  } else {
+    document.querySelector('.mode-btn.rainy')
+      .classList.add('active');
+  }
+}
+
+function toggleExpand(el) {
+  const card = el.closest('.block-card');
+
+  if (card) {
+    card.classList.toggle('expanded');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  updateClock();
+
+  setInterval(updateClock, 1000);
+
+  showDay(1);
+
+  setMode('sunny');
+
+});
+</script></body>
+</html>
