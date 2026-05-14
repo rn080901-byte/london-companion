@@ -1,1 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>London · 3-Day Live Companion · Diamond Max</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#ffffff;--bg-soft:#f7f5f2;--bg-card:#f2efe9;--bg-deep:#ede9e1;
+  --rule:#d8d0c0;--muted:#888070;--body:#2a2420;--heading:#0d0a08;
+  --gold:#a06820;--gold-lo:rgba(160,104,32,0.09);
+  --teal:#1e6860;--teal-lo:rgba(30,104,96,0.08);
+  --red:#8a2018;--red-lo:rgba(138,32,24,0.07);
+  --rain:#2a4a7a;--rain-lo:rgba(42,74,122,0.08);
+  --ok:#15803d;--ok-lo:rgba(21,128,61,0.08);
+  --skip:#888070;--skip-lo:rgba(136,128,112,0.08);
+  --warn-orange:#d97706;--warn-lo:rgba(217,119,6,0.08);
+  --royal:#3d2a6b;--royal-lo:rgba(61,42,107,0.08);
+  --nav-bg:#0d0a08;
+}
+html,body{height:100%;overscroll-behavior:none}
+body{font-family:'Instrument Sans',sans-serif;background:var(--bg-soft);color:var(--body);font-size:15px;line-height:1.65;padding-bottom:20px}
 
+/* ═══ TOP BAR ═══ */
+.top-bar{position:sticky;top:0;z-index:100;background:var(--nav-bg);padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(160,104,32,0.3)}
+.top-bar-tour{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(160,104,32,0.85);margin-bottom:3px}
+.top-bar-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:white;line-height:1}
+.top-bar-date{font-size:10.5px;color:rgba(255,255,255,0.5);margin-top:2px;letter-spacing:1px}
+.live-clock{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:300;color:var(--gold);line-height:1;text-align:right}
+.live-date-small{font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:1px;text-align:right;margin-top:2px}
+.tz-label{font-size:8.5px;color:rgba(160,104,32,0.7);letter-spacing:1.5px;text-align:right;margin-top:3px;text-transform:uppercase;font-weight:600}
+.tz-label.tz-warning{color:var(--warn-orange)}
+
+/* Manual override bar */
+.manual-bar{margin:10px 16px 0;background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11.5px}
+.manual-bar-label{color:var(--muted);flex-shrink:0}
+.manual-bar-label strong{color:var(--heading)}
+.manual-select{flex:1;min-width:140px;background:var(--bg-soft);border:1px solid var(--rule);border-radius:6px;padding:6px 10px;font-family:'Instrument Sans',sans-serif;font-size:12px;color:var(--body)}
+.manual-clear{background:transparent;border:1px solid var(--rule);color:var(--muted);border-radius:14px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer}
+.manual-clear:active{background:var(--bg-soft)}
+.manual-bar.is-active{background:var(--teal-lo);border-color:rgba(30,104,96,0.3)}
+.manual-bar.is-active .manual-bar-label strong{color:var(--teal)}
+
+/* ═══ DAY TABS ═══ */
+.day-tabs{display:flex;gap:4px;margin:12px 12px 0;background:var(--bg-deep);border-radius:10px;padding:4px}
+.day-tab{flex:1;background:transparent;border:none;color:var(--muted);padding:8px 3px;border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.2s;text-align:center;line-height:1.2;min-width:0}
+.day-tab .dt-num{font-family:'Cormorant Garamond',serif;font-size:0.95rem;display:block;line-height:1;margin-bottom:2px}
+.day-tab.active{background:var(--nav-bg);color:white;box-shadow:0 1px 3px rgba(0,0,0,0.12)}
+.day-tab.active .dt-num{color:var(--gold)}
+
+/* ═══ MODE TOGGLE (Sunny / Rainy) ═══ */
+.mode-toggle{display:flex;gap:6px;margin:10px 16px 0;background:var(--bg-deep);border-radius:10px;padding:5px}
+.mode-btn{flex:1;background:transparent;border:none;color:var(--muted);padding:8px 6px;border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:11.5px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.mode-btn.active.sunny{background:var(--gold);color:white}
+.mode-btn.active.rainy{background:var(--rain);color:white}
+
+/* ═══ STATUS PANEL ═══ */
+.status-panel{margin:14px 16px 0;border-radius:10px;overflow:hidden;border:1px solid rgba(21,128,61,0.25)}
+.status-panel.on-track{border-color:rgba(21,128,61,0.3)}
+.status-panel.running-late{border-color:rgba(217,119,6,0.3)}
+.status-panel.early{border-color:rgba(30,104,96,0.3)}
+.status-panel.complete{border-color:rgba(160,104,32,0.3)}
+.status-header{background:var(--nav-bg);padding:10px 14px;display:flex;align-items:center;gap:10px}
+.status-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:600}
+.status-body{background:var(--ok-lo);padding:10px 14px;font-size:13px;color:#0a3a1a;line-height:1.55;border-top:1px solid rgba(21,128,61,0.15);display:flex;align-items:flex-start;gap:10px}
+.status-panel.running-late .status-body{background:var(--warn-lo);color:#7a3a06;border-color:rgba(217,119,6,0.15)}
+.status-panel.early .status-body{background:var(--teal-lo);color:#0a3a30;border-color:rgba(30,104,96,0.15)}
+.status-panel.complete .status-body{background:var(--gold-lo);color:#5a3a08;border-color:rgba(160,104,32,0.15)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex-shrink:0;margin-top:4px;animation:pulse 2s ease infinite}
+.status-panel.running-late .status-dot{background:var(--warn-orange)}
+.status-panel.early .status-dot{background:var(--teal)}
+.status-panel.complete .status-dot{background:var(--gold);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+
+/* ═══ LATE NUDGE BAR ═══ */
+.late-bar{margin:10px 16px 0;background:var(--nav-bg);border:1px solid rgba(217,119,6,0.3);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.late-bar-label{font-size:11px;color:rgba(255,255,255,0.65);flex-shrink:0}
+.late-bar-label strong{color:var(--warn-orange)}
+.late-btns{display:flex;gap:6px;flex-wrap:wrap}
+.late-btn{background:rgba(217,119,6,0.15);border:1px solid rgba(217,119,6,0.3);color:var(--warn-orange);border-radius:16px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:background 0.15s}
+.late-btn:active{background:rgba(217,119,6,0.28)}
+.late-reset{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);border-radius:16px;padding:5px 10px;font-size:11px;cursor:pointer}
+.late-reset:active{background:rgba(255,255,255,0.07)}
+
+/* ═══ PROGRESS ═══ */
+.progress-wrap{margin:12px 16px 0;background:var(--bg-deep);border-radius:20px;height:5px;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--gold),rgba(160,104,32,0.55));border-radius:20px;transition:width 0.4s ease}
+.progress-labels{display:flex;justify-content:space-between;margin:5px 16px 0;font-size:10px;color:var(--muted)}
+
+/* ═══ DAY HEADER ═══ */
+.day-header{margin:14px 16px 0;padding:16px 18px 14px;border-radius:12px;border:1px solid var(--rule);background:linear-gradient(135deg,var(--bg) 0%,var(--bg-card) 100%);position:relative;overflow:hidden}
+.day-header::before{content:"";position:absolute;top:0;left:0;width:4px;height:100%;background:var(--gold)}
+.day-header.rainy-mode::before{background:var(--rain)}
+.day-eyebrow{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:4px}
+.day-header.rainy-mode .day-eyebrow{color:var(--rain)}
+.day-title{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:600;color:var(--heading);line-height:1.15;margin-bottom:4px}
+.day-subtitle{font-size:11.5px;color:var(--muted);font-style:italic}
+
+/* ═══ PHASE LABEL ═══ */
+.phase-label-wrap{padding:18px 16px 6px;display:flex;align-items:center;gap:10px}
+.phase-icon{font-size:13px}
+.phase-txt{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap}
+.phase-rule{flex:1;height:1px;background:var(--rule)}
+
+/* ═══ BLOCK CARDS ═══ */
+.blocks-list{padding:0 16px}
+.block-card{background:var(--bg);border:1px solid var(--rule);border-radius:10px;margin-bottom:8px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s,opacity 0.25s}
+.block-card.active{border-color:var(--gold);box-shadow:0 0 0 3px rgba(160,104,32,0.12)}
+.block-card.completed{opacity:0.5}
+.block-card.skipped{opacity:0.38;border-style:dashed}
+
+.block-head{display:grid;grid-template-columns:64px 1fr auto;gap:0 12px;padding:12px 14px;align-items:flex-start;cursor:pointer;user-select:none}
+.block-time{display:flex;flex-direction:column;align-items:flex-end;padding-top:2px}
+.block-clock{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--gold);line-height:1;transition:color 0.2s}
+.block-card.completed .block-clock,.block-card.skipped .block-clock{color:var(--muted)}
+.block-offset{font-size:9px;color:var(--warn-orange);margin-top:2px;text-align:right;letter-spacing:0.5px;display:none}
+.block-dur{font-size:9.5px;color:var(--muted);margin-top:3px;letter-spacing:0.5px}
+.block-title{font-size:14px;font-weight:600;color:var(--heading);line-height:1.35;margin-bottom:5px}
+.block-card.completed .block-title{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(136,128,112,0.4)}
+.block-card.skipped .block-title{color:var(--muted);text-decoration:line-through;text-decoration-thickness:2px}
+.block-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}
+.tag{font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:8px;font-weight:600;border:1px solid}
+.tag-rest{background:var(--teal-lo);color:var(--teal);border-color:rgba(30,104,96,0.2)}
+.tag-key{background:var(--gold-lo);color:var(--gold);border-color:rgba(160,104,32,0.2)}
+.tag-food{background:var(--red-lo);color:var(--red);border-color:rgba(138,32,24,0.15)}
+.tag-transit{background:rgba(80,80,110,0.07);color:#505078;border-color:rgba(80,80,110,0.15)}
+.tag-peak{background:var(--gold-lo);color:var(--gold);border-color:rgba(160,104,32,0.25)}
+.tag-rule{background:var(--red-lo);color:var(--red);border-color:rgba(138,32,24,0.2)}
+.tag-royal{background:var(--royal-lo);color:var(--royal);border-color:rgba(61,42,107,0.2)}
+.tag-walk{background:rgba(30,104,96,0.08);color:var(--teal);border-color:rgba(30,104,96,0.2)}
+.tag-museum{background:rgba(42,74,122,0.07);color:var(--rain);border-color:rgba(42,74,122,0.18)}
+.tag-night{background:rgba(13,10,8,0.06);color:var(--heading);border-color:rgba(13,10,8,0.15)}
+.tag-indoor{background:var(--rain-lo);color:var(--rain);border-color:rgba(42,74,122,0.25)}
+.tag-active{background:rgba(160,104,32,0.15);color:var(--gold);border-color:rgba(160,104,32,0.35)}
+.tag-done{background:var(--ok-lo);color:var(--ok);border-color:rgba(21,128,61,0.2)}
+.tag-skipped{background:var(--skip-lo);color:var(--skip);border-color:rgba(136,128,112,0.2)}
+.block-cost-line{font-size:11.5px;color:var(--muted)}
+.block-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-top:2px}
+.expand-btn{width:26px;height:26px;border-radius:50%;background:var(--bg-soft);border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);transition:all 0.2s;flex-shrink:0}
+.block-card.expanded .expand-btn{background:var(--gold-lo);border-color:rgba(160,104,32,0.3);color:var(--gold);transform:rotate(180deg)}
+
+.nav-mini-btn{display:flex;align-items:center;gap:4px;background:var(--nav-bg);color:white;border:none;border-radius:14px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none;transition:background 0.15s}
+.nav-mini-btn:active{background:#2a2420}
+
+.block-body{display:none;padding:0 14px 14px;border-top:1px solid var(--rule)}
+.block-card.expanded .block-body{display:block}
+
+.block-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn-skip{display:flex;align-items:center;gap:5px;background:var(--skip-lo);border:1px solid rgba(136,128,112,0.25);color:var(--muted);border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:600;cursor:pointer;transition:background 0.15s;flex:1;justify-content:center}
+.btn-skip:active{background:rgba(136,128,112,0.15)}
+.btn-skip.undo{background:rgba(138,32,24,0.06);border-color:rgba(138,32,24,0.15);color:var(--red)}
+.nav-full-btn{display:flex;align-items:center;justify-content:center;gap:7px;background:var(--nav-bg);color:white;text-decoration:none;border-radius:8px;padding:11px 14px;font-size:13px;font-weight:600;transition:background 0.15s;width:100%;margin-top:12px}
+.nav-full-btn:active{background:#2a2420}
+.nav-full-btn .nav-arrow{color:var(--gold)}
+
+.block-text{font-size:13.5px;color:var(--body);line-height:1.7;margin-top:10px}
+.block-text strong{color:var(--heading)}
+.callout{margin-top:10px;padding:10px 13px;border-radius:6px;font-size:12.5px;line-height:1.6;display:flex;gap:8px;align-items:flex-start}
+.callout-tip{background:var(--gold-lo);border:1px solid rgba(160,104,32,0.18);color:#7a4e10}
+.callout-warn{background:var(--red-lo);border:1px solid rgba(138,32,24,0.15);color:#8a2018}
+.callout-rain{background:var(--rain-lo);border:1px solid rgba(42,74,122,0.2);color:#1a2a5a}
+.callout-royal{background:var(--royal-lo);border:1px solid rgba(61,42,107,0.18);color:#2a1a4a}
+.callout-icon{font-size:13px;flex-shrink:0;margin-top:1px}
+
+.steps-box{margin-top:10px;background:var(--bg-soft);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.steps-header{background:var(--bg-deep);padding:8px 12px;font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:600;border-bottom:1px solid var(--rule)}
+.steps-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.step-row{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:flex-start}
+.step-num{width:22px;height:22px;background:var(--gold-lo);border:1px solid rgba(160,104,32,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0}
+.step-num.stop{background:var(--red-lo);border-color:rgba(138,32,24,0.2);color:var(--red);font-size:12px}
+.step-content{font-size:12.5px;color:var(--body);line-height:1.5}
+.step-content strong{color:var(--heading);display:block;font-size:11.5px;margin-bottom:1px}
+
+.tube-box{margin-top:10px;background:var(--bg-soft);border:1px solid var(--rule);border-radius:8px;padding:12px 14px}
+.tube-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.tube-step:last-child{margin-bottom:0}
+.tube-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;margin-top:1px;color:white}
+.tube-dot.jubilee{background:#A0A5A9}
+.tube-dot.central{background:#E32017}
+.tube-dot.circle{background:#FFD300;color:#0d0a08}
+.tube-dot.northern{background:#000000}
+.tube-dot.piccadilly{background:#003688}
+.tube-dot.victoria{background:#0098D4}
+.tube-dot.elizabeth{background:#6950A1}
+.tube-line-name{font-size:12px;font-weight:600;color:var(--heading)}
+.tube-line-detail{font-size:11px;color:var(--muted);margin-top:1px}
+
+.food-stops{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.food-stop{background:var(--bg-soft);border:1px solid var(--rule);border-radius:8px;padding:11px 13px}
+.food-stop-num{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;color:var(--gold);line-height:1;margin-bottom:4px}
+.food-stop-name{font-size:12.5px;font-weight:600;color:var(--heading);margin-bottom:3px}
+.food-stop-item{font-size:12px;color:var(--body);line-height:1.5}
+.food-stop-note{font-size:11px;color:var(--muted);margin-top:5px;font-style:italic}
+
+/* Rain banner */
+.rain-banner{margin:10px 16px 0;background:var(--rain-lo);border:1px solid rgba(42,74,122,0.25);border-radius:10px;padding:11px 14px;display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#1a2a5a;line-height:1.55}
+.rain-banner strong{color:var(--rain);font-weight:600}
+
+/* Cost summary */
+.cost-summary-card{margin:14px 16px 0;background:var(--bg);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.cost-summary-header{background:rgba(30,104,96,0.08);border-bottom:1px solid rgba(30,104,96,0.15);padding:10px 14px;font-size:9.5px;letter-spacing:2.5px;text-transform:uppercase;color:var(--teal);font-weight:600}
+.cost-row-sm{display:grid;grid-template-columns:1fr auto auto;padding:7px 14px;border-bottom:1px solid var(--rule);font-size:12px;gap:8px;align-items:center}
+.cost-row-sm:last-child{border-bottom:none}
+.cost-row-sm:nth-child(even){background:var(--bg-soft)}
+.cost-row-sm.total{background:rgba(30,104,96,0.06)!important;border-top:2px solid rgba(30,104,96,0.2);font-weight:700}
+.cr-gbp-sm{font-family:'Cormorant Garamond',serif;font-size:0.95rem;font-weight:700;color:var(--teal);text-align:right}
+.cr-aud-sm{font-size:10.5px;color:var(--muted);text-align:right;min-width:52px}
+
+/* Toast */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--nav-bg);color:white;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:all 0.25s ease;pointer-events:none;z-index:200;border:1px solid rgba(160,104,32,0.35);white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.day-hidden,.mode-hidden{display:none}
+.bottom-pad{height:28px}
+
+/* ═══ MAP VIEW ═══ */
+.view-toggle{display:flex;gap:6px;margin:10px 16px 0;background:var(--bg-deep);border-radius:10px;padding:5px}
+.view-btn{flex:1;background:transparent;border:none;color:var(--muted);padding:8px 6px;border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:11.5px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.view-btn.active{background:var(--nav-bg);color:white}
+.view-btn.active.maps{color:var(--gold)}
+
+.map-view{display:none;padding:0 16px;margin-top:14px}
+.map-view.is-active{display:block}
+.list-view.is-hidden{display:none}
+
+#mapEl{width:100%;height:60vh;min-height:420px;border-radius:12px;border:1px solid var(--rule);box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.map-info{margin-top:10px;background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:11px 14px;display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--body);line-height:1.55}
+.map-info .mi-icon{font-size:1.05rem;flex-shrink:0;margin-top:1px}
+.map-info strong{color:var(--heading)}
+
+/* Numbered pin icon */
+.numbered-pin{background:var(--gold);color:white;border:2px solid white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.3);text-align:center;line-height:1}
+.numbered-pin.completed{background:var(--ok);opacity:0.7}
+.numbered-pin.active-pin{background:var(--red);transform:scale(1.15);border-width:3px;animation:pinPulse 1.6s ease infinite}
+.numbered-pin.skipped-pin{background:var(--muted);opacity:0.4}
+@keyframes pinPulse{0%,100%{box-shadow:0 2px 6px rgba(138,32,24,0.6),0 0 0 0 rgba(138,32,24,0.4)}50%{box-shadow:0 2px 6px rgba(138,32,24,0.6),0 0 0 12px rgba(138,32,24,0)}}
+
+/* Leaflet popup customization */
+.leaflet-popup-content-wrapper{border-radius:8px}
+.leaflet-popup-content{font-family:'Instrument Sans',sans-serif;font-size:13px;margin:10px 12px;line-height:1.5}
+.leaflet-popup-content strong{font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:var(--heading);display:block;margin-bottom:3px}
+.leaflet-popup-content .popup-time{font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.5px;margin-bottom:5px}
+.leaflet-popup-content a{color:var(--teal);text-decoration:none;font-weight:600;font-size:11.5px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div>
+    <div class="top-bar-tour">🇬🇧 London · Diamond Max</div>
+    <div class="top-bar-title" id="topTitle">London · Day 01</div>
+    <div class="top-bar-date" id="topSub">Fri 1 Aug · Arrival</div>
+  </div>
+  <div>
+    <div class="live-clock" id="liveClock">--:--</div>
+    <div class="live-date-small" id="liveDate">--</div>
+    <div class="tz-label" id="tzLabel">🇬🇧 London time</div>
+  </div>
+</div>
+
+<!-- DAY TABS -->
+<div class="day-tabs">
+  <button class="day-tab active" onclick="showDay(1)"><span class="dt-num">01</span>Fri 1<br>Arrival</button>
+  <button class="day-tab" onclick="showDay(2)"><span class="dt-num">02</span>Sat 2<br>Royal</button>
+  <button class="day-tab" onclick="showDay(3)"><span class="dt-num">03</span>Sun 3<br>Notting Hill</button>
+  <button class="day-tab" onclick="showDay(4)"><span class="dt-num">04</span>Mon 4<br>Tower</button>
+  <button class="day-tab" onclick="showDay(5)"><span class="dt-num">05</span>Tue 5<br>⚡ HP</button>
+</div>
+
+<!-- VIEW TOGGLE (List / Map) -->
+<div class="view-toggle">
+  <button class="view-btn list active" onclick="setView('list')">📋 List</button>
+  <button class="view-btn maps" onclick="setView('map')">🗺 Map</button>
+</div>
+
+<!-- MODE TOGGLE -->
+<div class="mode-toggle">
+  <button class="mode-btn sunny active" onclick="setMode('sunny')">☀️ Sunny Plan</button>
+  <button class="mode-btn rainy" onclick="setMode('rainy')">🌧️ Rainy Day Backup</button>
+</div>
+
+<!-- STATUS PANEL -->
+<div class="status-panel on-track" id="statusPanel">
+  <div class="status-header">
+    <span style="font-size:1.1rem">🤖</span>
+    <span class="status-label">Autonomous Check</span>
+  </div>
+  <div class="status-body">
+    <div class="status-dot"></div>
+    <span id="statusText">Loading…</span>
+  </div>
+</div>
+
+<!-- LATE NUDGE BAR -->
+<div class="late-bar">
+  <span class="late-bar-label">⏱ <strong>Running late?</strong></span>
+  <div class="late-btns">
+    <button class="late-btn" onclick="addLate(15)">+15 min</button>
+    <button class="late-btn" onclick="addLate(30)">+30 min</button>
+    <button class="late-btn" onclick="addLate(60)">+60 min</button>
+  </div>
+  <button class="late-reset" onclick="resetLate()">Reset</button>
+</div>
+
+<!-- MANUAL BLOCK OVERRIDE -->
+<div class="manual-bar" id="manualBar">
+  <span class="manual-bar-label">📍 <strong>I'm at:</strong></span>
+  <select class="manual-select" id="manualSelect" onchange="setManualBlock(this.value)">
+    <option value="">— Auto-detect from London time —</option>
+  </select>
+  <button class="manual-clear" onclick="clearManual()">Clear</button>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-bar" id="progressBar" style="width:0%"></div>
+</div>
+<div class="progress-labels">
+  <span id="progressStart">08:00</span>
+  <span id="progressLabel">–</span>
+  <span id="progressEnd">22:30</span>
+</div>
+
+<!-- Rain banner (visible only in rainy mode) -->
+<div class="rain-banner mode-hidden" id="rainBanner">
+  <span style="font-size:1.1rem">🌧️</span>
+  <div><strong>Rainy day plan active.</strong> Indoor-heavy alternates substituted. Museums, covered arcades, pubs, and stations connect you point-to-point with minimum exposure. All time blocks still tracked.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ════════════════════ MAP VIEW ════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="map-view" id="mapView">
+  <div id="mapEl"></div>
+  <div class="map-info">
+    <span class="mi-icon">🗺</span>
+    <div>
+      <strong>Numbered pins</strong> match the block order for the current day. <strong>Red</strong> = current/active, <strong>green</strong> = done, <strong>gold</strong> = upcoming, <strong>grey</strong> = skipped. Tap any pin for details + a "Navigate" link.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════ LIST VIEW START ══════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="list-view" id="listView">
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ════════════════════ DAY 1 SUNNY ═════════════════════════ -->
+<!-- ════════════════ Fri 1 Aug · Arrival Evening ═════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="day-content" id="day-1-sunny">
+
+<div class="day-header">
+  <div class="day-eyebrow">Day One — Arrival</div>
+  <div class="day-title">Landing in London</div>
+  <div class="day-subtitle">Fri 1 Aug · arrive ~20:30 · hotel + sleep</div>
+</div>
+
+<div class="phase-label-wrap">
+  <span class="phase-icon">✈️</span>
+  <span class="phase-txt">Phase 1 — Arrival &amp; Transfer</span>
+  <div class="phase-rule"></div>
+</div>
+
+<div class="blocks-list">
+
+<!-- 1S.0 — Land Heathrow -->
+<div class="block-card" data-day="1" data-mode="sunny" data-index="0" data-base="20:30" data-dur="45" data-lat="51.4700" data-lon="-0.4543">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">20:30</span><span class="block-offset"></span><span class="block-dur">45 min</span></div>
+    <div>
+      <div class="block-title">Land + immigration + bags</div>
+      <div class="block-tags"><span class="tag tag-rule">Arrival</span></div>
+      <div class="block-cost-line">Free · ePassport gates open to AU citizens</div>
+    </div>
+    <div class="block-right"><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Heathrow eGates work for Australian passports — fastest route through immigration. After collecting bags, follow signs for <strong>Underground &amp; Elizabeth Line</strong>.</div>
+    <div class="callout callout-tip"><span class="callout-icon">📱</span><span><strong>Phone setup before landing:</strong> turn on roaming or load an eSIM (Holafly / Airalo) · open Citymapper · save offline London map · tap-to-pay card ready for Elizabeth Line gates.</span></div>
+    <div class="callout callout-warn"><span class="callout-icon">⚠️</span><span><strong>Flight details placeholder</strong> — update with exact arrival time, terminal &amp; flight number once confirmed.</span></div>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<!-- 1S.1 — Elizabeth line -->
+<div class="block-card" data-day="1" data-mode="sunny" data-index="1" data-base="21:15" data-dur="45" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">21:15</span><span class="block-offset"></span><span class="block-dur">45 min</span></div>
+    <div>
+      <div class="block-title">Elizabeth Line → King's Cross</div>
+      <div class="block-tags"><span class="tag tag-transit">Train</span></div>
+      <div class="block-cost-line">~£12.80 pp · contactless</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Elizabeth Line is the fastest + cleanest option. Tap contactless at the gate — much cheaper than Heathrow Express. ~35 min Heathrow Terminal 2/3 → Farringdon, then 1 stop on the Tube to King's Cross.</div>
+    <div class="tube-box">
+      <div class="tube-step">
+        <div class="tube-dot elizabeth">E</div>
+        <div><div class="tube-line-name">Elizabeth Line eastbound</div><div class="tube-line-detail">Heathrow → Farringdon · ~35 min · 6 stops</div></div>
+      </div>
+      <div class="tube-step">
+        <div class="tube-dot circle">C</div>
+        <div><div class="tube-line-name">Circle / Hammersmith northbound</div><div class="tube-line-detail">Farringdon → King's Cross St Pancras · 1 stop · 3 min</div></div>
+      </div>
+    </div>
+    <div class="callout callout-tip"><span class="callout-icon">💡</span><span><strong>Even simpler:</strong> Piccadilly Line from Heathrow direct to King's Cross — slower (~50 min) but no changes. Pick this if you're exhausted and don't want to wrangle bags between trains.</span></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank"><span style="color:var(--gold)">▶</span> Navigate to hotel <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<!-- 1S.2 — Check in -->
+<div class="block-card" data-day="1" data-mode="sunny" data-index="2" data-base="22:00" data-dur="30" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">22:00</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div>
+      <div class="block-title">Hotel check-in · hub Premier Inn King's Cross</div>
+      <div class="block-tags"><span class="tag tag-rest">Rest</span></div>
+      <div class="block-cost-line">Pre-booked</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">5-min walk from King's Cross St Pancras station. Self-check-in kiosks are quick. Room is compact — that's the design, don't expect a Hilton suite.</div>
+    <div class="callout callout-tip"><span class="callout-icon">🛏️</span><span>St Pancras International (the Eurostar terminal) is the building right next door — handy reconnaissance for Wednesday morning.</span></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank"><span style="color:var(--gold)">▶</span> Navigate to hotel <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<!-- 1S.3 — Late food -->
+<div class="block-card" data-day="1" data-mode="sunny" data-index="3" data-base="22:30" data-dur="60" data-lat="51.5308" data-lon="-0.1239">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">22:30</span><span class="block-offset"></span><span class="block-dur">1 hr</span></div>
+    <div>
+      <div class="block-title">Late dinner or snack</div>
+      <div class="block-tags"><span class="tag tag-food">Food</span><span class="tag tag-night">Late</span></div>
+      <div class="block-cost-line">£10–25 pp</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5308,-0.1239" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Many places shut by 22:30 in London on a Friday but King's Cross is well-served late. Options within 5-min walk:</div>
+    <div class="food-stops">
+      <div class="food-stop"><div class="food-stop-num">01</div><div class="food-stop-name">Dishoom King's Cross</div><div class="food-stop-item">Bombay café · open till 23:00 Fri. Bookings recommended, walk-ins possible late.</div><div class="food-stop-note">£15–25 pp.</div></div>
+      <div class="food-stop"><div class="food-stop-num">02</div><div class="food-stop-name">German Gymnasium</div><div class="food-stop-item">Hotel-restaurant inside Pancras Sq. Open till 22:30.</div><div class="food-stop-note">£20–35 pp.</div></div>
+      <div class="food-stop"><div class="food-stop-num">03</div><div class="food-stop-name">M&amp;S Simply Food (St Pancras concourse)</div><div class="food-stop-item">Quickest fallback — sandwiches, salads, hot pasties. Open very late.</div><div class="food-stop-note">£5–12 pp.</div></div>
+    </div>
+    <div class="callout callout-tip"><span class="callout-icon">😴</span><span><strong>Honest call:</strong> long-haul exhaustion is real. M&amp;S sandwich in the hotel room + early sleep is often the right move. Big Day 2 tomorrow.</span></div>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="cost-summary-card">
+  <div class="cost-summary-header">💷 Day 1 Cost — 2 people</div>
+  <div class="cost-row-sm"><span>Elizabeth Line × 2</span><span class="cr-gbp-sm">~£26</span><span class="cr-aud-sm">~A$50</span></div>
+  <div class="cost-row-sm"><span>Late dinner / snack</span><span class="cr-gbp-sm">£20–50</span><span class="cr-aud-sm">~A$60</span></div>
+  <div class="cost-row-sm total"><span>🧮 Total (excl. hotel)</span><span class="cr-gbp-sm">~£45–75</span><span class="cr-aud-sm">~A$110</span></div>
+</div>
+
+</div><!-- end day-1-sunny -->
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ════════════════════ DAY 1 RAINY ═════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="day-content day-hidden mode-hidden" id="day-1-rainy">
+
+<div class="day-header rainy-mode">
+  <div class="day-eyebrow">Day One — Arrival (Wet)</div>
+  <div class="day-title">Landing in London (Rainy)</div>
+  <div class="day-subtitle">Fri 1 Aug · arrive ~20:30 · hotel + sleep</div>
+</div>
+
+<div class="phase-label-wrap">
+  <span class="phase-icon">✈️</span>
+  <span class="phase-txt">Phase 1 — Arrival &amp; Transfer</span>
+  <div class="phase-rule"></div>
+</div>
+
+<div class="blocks-list">
+
+<div class="block-card" data-day="1" data-mode="rainy" data-index="0" data-base="20:30" data-dur="45" data-lat="51.4700" data-lon="-0.4543">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">20:30</span><span class="block-offset"></span><span class="block-dur">45 min</span></div>
+    <div><div class="block-title">Land + immigration + bags</div><div class="block-tags"><span class="tag tag-rule">Arrival</span></div><div class="block-cost-line">Free · eGates</div></div>
+    <div class="block-right"><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Same as sunny. Rain doesn't affect indoor terminal time.</div>
+    <div class="callout callout-rain"><span class="callout-icon">🌧️</span><span>Pull an umbrella out before exiting baggage hall — Heathrow's curbside is partly open. Elizabeth Line platforms are fully underground so you'll be dry on the train.</span></div>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="1" data-mode="rainy" data-index="1" data-base="21:15" data-dur="45" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">21:15</span><span class="block-offset"></span><span class="block-dur">45 min</span></div>
+    <div><div class="block-title">Elizabeth Line → King's Cross</div><div class="block-tags"><span class="tag tag-transit">Train</span></div><div class="block-cost-line">~£12.80 pp</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Elizabeth Line + Tube — fully underground, dry corridor straight to the hotel street.</div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="1" data-mode="rainy" data-index="2" data-base="22:00" data-dur="30" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">22:00</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div><div class="block-title">Hotel check-in</div><div class="block-tags"><span class="tag tag-rest">Rest</span></div><div class="block-cost-line">Pre-booked</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">200m walk from St Pancras exit — some of it covered, some not. Have the umbrella ready as you leave the station.</div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="1" data-mode="rainy" data-index="3" data-base="22:30" data-dur="60" data-lat="51.5308" data-lon="-0.1239">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">22:30</span><span class="block-offset"></span><span class="block-dur">1 hr</span></div>
+    <div><div class="block-title">Late dinner — indoor pick</div><div class="block-tags"><span class="tag tag-food">Food</span><span class="tag tag-indoor">Indoor</span></div><div class="block-cost-line">£10–25 pp</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5308,-0.1239" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Rain night → grab something from M&amp;S in St Pancras concourse (fully covered walk via the station) and eat at the hotel. Skip the rain-soaked walk to a restaurant.</div>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+</div><!-- end day-1-rainy -->
+
+
+<!-- ════════════════════ DAY 2 SUNNY ═════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="day-content" id="day-2-sunny">
+
+<div class="day-header">
+  <div class="day-eyebrow">Day One — Sunny</div>
+  <div class="day-title">Royal &amp; Classic London</div>
+  <div class="day-subtitle">Westminster · Buckingham · Mayfair · Soho</div>
+</div>
+
+<div class="phase-label-wrap">
+  <span class="phase-icon">👑</span>
+  <span class="phase-txt">Phase 1 — Westminster Morning</span>
+  <div class="phase-rule"></div>
+</div>
+
+<div class="blocks-list">
+
+<!-- 1S.0 -->
+<div class="block-card" data-day="2" data-mode="sunny" data-index="0" data-base="07:45" data-dur="30" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time">
+      <span class="block-clock">07:45</span><span class="block-offset"></span><span class="block-dur">30 min</span>
+    </div>
+    <div>
+      <div class="block-title">Breakfast &amp; King's Cross departure</div>
+      <div class="block-tags"><span class="tag tag-rule">Before Leaving</span></div>
+      <div class="block-cost-line">£0–15 · Hotel / Pret / Leon</div>
+    </div>
+    <div class="block-right"><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Eat well. Long day ahead. Pret/Leon in St Pancras concourse if hotel breakfast is dire.</div>
+    <div class="callout callout-tip"><span class="callout-icon">🎒</span><span><strong>Pack:</strong> phone fully charged · contactless card + backup · umbrella (always) · light layer · comfortable shoes (~15km today) · Westminster Abbey e-ticket loaded.</span></div>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<!-- 1S.1 -->
+
+<!-- 2S.1 (NEW) — Platform 9 3/4 -->
+<div class="block-card" data-day="2" data-mode="sunny" data-index="1" data-base="08:15" data-dur="15" data-lat="51.5320" data-lon="-0.1245">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">08:15</span><span class="block-offset"></span><span class="block-dur">15 min</span></div>
+    <div>
+      <div class="block-title">⚡ Platform 9¾ at King's Cross</div>
+      <div class="block-tags"><span class="tag tag-key">⚡ HP Free</span><span class="tag tag-walk">2 min walk</span></div>
+      <div class="block-cost-line">Free · trolley photo</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5320,-0.1245" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">2-min walk from the hotel. Trolley vanishing into the brick wall on the King's Cross concourse — staff there to take the photo + costume props (scarves) provided. Free, fun, 10 min total.</div>
+    <div class="callout callout-tip"><span class="callout-icon">📸</span><span><strong>Best time:</strong> right now, 08:15 — virtually no queue. By 10:00 there's a 30+ min line.</span></div>
+    <div class="block-text"><strong>Harry Potter Shop</strong> right next to it (opens 08:00) — quick browse if your son wants Sorting Hat / wand to bring on Day 5.</div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5320,-0.1245" target="_blank"><span style="color:var(--gold)">▶</span> Platform 9¾ <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+<div class="block-card" data-day="2" data-mode="sunny" data-index="2" data-base="08:30" data-dur="20" data-lat="51.5012" data-lon="-0.1248">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">08:30</span><span class="block-offset"></span><span class="block-dur">20 min</span></div>
+    <div>
+      <div class="block-title">Tube → Westminster</div>
+      <div class="block-tags"><span class="tag tag-transit">Tube</span></div>
+      <div class="block-cost-line">£2.80 · contactless</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5012,-0.1248" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Direct ride. Exit 6 dumps you under Big Ben.</div>
+    <div class="tube-box">
+      <div class="tube-step">
+        <div class="tube-dot jubilee">J</div>
+        <div><div class="tube-line-name">Jubilee Line southbound</div><div class="tube-line-detail">King's Cross → Westminster · 4 stops · ~12 min</div></div>
+      </div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5012,-0.1248" target="_blank"><span style="color:var(--gold)">▶</span> Navigate to Westminster <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<!-- 1S.2 -->
+<div class="block-card" data-day="2" data-mode="sunny" data-index="3" data-base="08:50" data-dur="40" data-lat="51.5007" data-lon="-0.1246">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">08:50</span><span class="block-offset"></span><span class="block-dur">40 min</span></div>
+    <div>
+      <div class="block-title">Big Ben + Westminster Bridge</div>
+      <div class="block-tags"><span class="tag tag-royal">Iconic</span><span class="tag tag-key">Photo</span></div>
+      <div class="block-cost-line">Free</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5007,-0.1246" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Listen for chimes on the half. Walk to the centre of Westminster Bridge for the classic Big Ben + Parliament + Thames frame.</div>
+    <div class="steps-box">
+      <div class="steps-header">📸 Three angles</div>
+      <div class="steps-body">
+        <div class="step-row"><div class="step-num">1</div><div class="step-content"><strong>Under the tower</strong>Foreshortened, dramatic.</div></div>
+        <div class="step-row"><div class="step-num">2</div><div class="step-content"><strong>Mid-bridge</strong>Postcard London.</div></div>
+        <div class="step-row"><div class="step-num">3</div><div class="step-content"><strong>Parliament Sq, Abbey side</strong>Churchill statue + tower.</div></div>
+      </div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5007,-0.1246" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<!-- 1S.3 -->
+<div class="block-card" data-day="2" data-mode="sunny" data-index="4" data-base="09:30" data-dur="120" data-lat="51.4993" data-lon="-0.1273">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">09:30</span><span class="block-offset"></span><span class="block-dur">2 hrs</span></div>
+    <div>
+      <div class="block-title">Westminster Abbey</div>
+      <div class="block-tags"><span class="tag tag-key">Pre-Book</span><span class="tag tag-royal">Royal</span></div>
+      <div class="block-cost-line">£29 pp · ~A$56</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.4993,-0.1273" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Coronation church since 1066. Book 09:30 entry — first slot, smallest crowd. Now you get the full 2 hours it deserves.</div>
+    <div class="steps-box">
+      <div class="steps-header">📍 What to look for</div>
+      <div class="steps-body">
+        <div class="step-row"><div class="step-num">1</div><div class="step-content"><strong>Poets' Corner</strong>Chaucer, Dickens, Hardy. Memorials to Shakespeare, Austen, Brontës.</div></div>
+        <div class="step-row"><div class="step-num">2</div><div class="step-content"><strong>Coronation Chair</strong>700 years old. Schoolboy graffiti carved on the base.</div></div>
+        <div class="step-row"><div class="step-num">3</div><div class="step-content"><strong>Lady Chapel ceiling</strong>Fan vaulting. Look up.</div></div>
+        <div class="step-row"><div class="step-num">4</div><div class="step-content"><strong>Tomb of the Unknown Warrior</strong>Only floor stone forbidden to walk on.</div></div>
+      </div>
+    </div>
+    <div class="callout callout-warn"><span class="callout-icon">📅</span><span><strong>Closed Sundays</strong> — services only. If Day 1 is a Sunday, swap with St Paul's on Day 3.</span></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.4993,-0.1273" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="phase-label-wrap">
+  <span class="phase-icon">🌳</span>
+  <span class="phase-txt">Phase 2 — Palace, Park &amp; Lunch</span>
+  <div class="phase-rule"></div>
+</div>
+
+<div class="blocks-list">
+
+<!-- 1S.4 -->
+<div class="block-card" data-day="2" data-mode="sunny" data-index="5" data-base="11:30" data-dur="60" data-lat="51.5024" data-lon="-0.1346">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">11:30</span><span class="block-offset"></span><span class="block-dur">60 min</span></div>
+    <div>
+      <div class="block-title">St James's Park walk + Guard ceremony catch</div>
+      <div class="block-tags"><span class="tag tag-walk">Walk</span><span class="tag tag-royal">Guard</span></div>
+      <div class="block-cost-line">Free</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5024,-0.1346" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">From Abbey, walk up Birdcage Walk into the park. Cross the <strong>Blue Bridge</strong> — view west is Buckingham Palace through plane trees. Pelicans on the lake (gift of a Russian ambassador, 1660s).</div>
+    <div class="block-text">Arrive at Buckingham ~11:45 — Guard ceremony ends 11:45, you'll catch the old guard marching back to barracks. Less crushing than the 11:00 peak crowd.</div>
+    <div class="callout callout-royal"><span class="callout-icon">🦢</span><span>The most romantic 30 minutes in central London. Slow down.</span></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5024,-0.1346" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<!-- 1S.5 -->
+<div class="block-card" data-day="2" data-mode="sunny" data-index="6" data-base="12:30" data-dur="90" data-lat="51.5066" data-lon="-0.1465">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">12:30</span><span class="block-offset"></span><span class="block-dur">1.5 hrs</span></div>
+    <div>
+      <div class="block-title">Lunch — Shepherd Market, Mayfair</div>
+      <div class="block-tags"><span class="tag tag-food">Food</span></div>
+      <div class="block-cost-line">£20–35 pp</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5066,-0.1465" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">10-min walk from the Palace up Constitution Hill, through Green Park into Mayfair.</div>
+    <div class="food-stops">
+      <div class="food-stop"><div class="food-stop-num">01</div><div class="food-stop-name">Ye Grapes / The Shepherds Tavern</div><div class="food-stop-item">Cosy historic pubs on a hidden Georgian square. Outside tables.</div><div class="food-stop-note">Pie + pint £18–24.</div></div>
+      <div class="food-stop"><div class="food-stop-num">02</div><div class="food-stop-name">The Audley (Mount St)</div><div class="food-stop-item">Stunning restored Victorian pub — Artfarm. Upmarket. Worth booking.</div><div class="food-stop-note">Mains £18–28.</div></div>
+      <div class="food-stop"><div class="food-stop-num">03</div><div class="food-stop-name">Mount Street Deli</div><div class="food-stop-item">Quick sandwiches + coffee if running long.</div><div class="food-stop-note">£15.</div></div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5066,-0.1465" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="phase-label-wrap">
+  <span class="phase-icon">🌳</span>
+  <span class="phase-txt">Phase 3 — Hyde Park &amp; Mayfair</span>
+  <div class="phase-rule"></div>
+</div>
+
+<div class="blocks-list">
+
+<!-- 1S.6 -->
+<div class="block-card" data-day="2" data-mode="sunny" data-index="7" data-base="14:00" data-dur="120" data-lat="51.5074" data-lon="-0.1657">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">14:00</span><span class="block-offset"></span><span class="block-dur">2 hrs</span></div>
+    <div>
+      <div class="block-title">Hyde Park — Serpentine loop</div>
+      <div class="block-tags"><span class="tag tag-walk">Walk</span></div>
+      <div class="block-cost-line">Free</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5074,-0.1657" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Walk into Hyde Park at Hyde Park Corner (5 min from Mayfair).</div>
+    <div class="steps-box">
+      <div class="steps-header">🌳 Suggested loop</div>
+      <div class="steps-body">
+        <div class="step-row"><div class="step-num">1</div><div class="step-content"><strong>Rose Garden</strong>Tucked-away, intimate. Most visitors miss it.</div></div>
+        <div class="step-row"><div class="step-num">2</div><div class="step-content"><strong>Serpentine</strong>Long curving lake. Pedalos £14/30min if you fancy it.</div></div>
+        <div class="step-row"><div class="step-num">3</div><div class="step-content"><strong>Diana Memorial Fountain</strong>Granite ring. Sit on the edge.</div></div>
+        <div class="step-row"><div class="step-num">4</div><div class="step-content"><strong>Serpentine Bar &amp; Kitchen</strong>Coffee or G&amp;T on the terrace.</div></div>
+      </div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5074,-0.1657" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<!-- 1S.7 -->
+<div class="block-card" data-day="2" data-mode="sunny" data-index="8" data-base="16:00" data-dur="120" data-lat="51.5089" data-lon="-0.1395">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">16:00</span><span class="block-offset"></span><span class="block-dur">2 hrs</span></div>
+    <div>
+      <div class="block-title">Mayfair wander — Bond St + Burlington Arcade</div>
+      <div class="block-tags"><span class="tag tag-walk">Walk</span></div>
+      <div class="block-cost-line">Free</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5089,-0.1395" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Leave park at Marble Arch. Walk east through Mayfair.</div>
+    <div class="steps-box">
+      <div class="steps-header">🛍 The loop</div>
+      <div class="steps-body">
+        <div class="step-row"><div class="step-num">1</div><div class="step-content"><strong>South Audley → Mount Street</strong>Prettiest streets in London.</div></div>
+        <div class="step-row"><div class="step-num">2</div><div class="step-content"><strong>Bond Street</strong>Flagships. Window-shop.</div></div>
+        <div class="step-row"><div class="step-num">3</div><div class="step-content"><strong>Burlington Arcade</strong>1819. Uniformed Beadles still patrol — don't whistle.</div></div>
+        <div class="step-row"><div class="step-num">4</div><div class="step-content"><strong>Royal Academy courtyard</strong>Free big-scale sculpture.</div></div>
+      </div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5089,-0.1395" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="phase-label-wrap">
+  <span class="phase-icon">🌃</span>
+  <span class="phase-txt">Phase 4 — Soho After Dark</span>
+  <div class="phase-rule"></div>
+</div>
+
+<div class="blocks-list">
+
+<!-- 1S.8 -->
+<div class="block-card" data-day="2" data-mode="sunny" data-index="9" data-base="18:00" data-dur="240" data-lat="51.5136" data-lon="-0.1365">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">18:00</span><span class="block-offset"></span><span class="block-dur">4 hrs</span></div>
+    <div>
+      <div class="block-title">Drinks &amp; Dinner in Soho</div>
+      <div class="block-tags"><span class="tag tag-food">Food</span><span class="tag tag-night">Night</span></div>
+      <div class="block-cost-line">£60–100 for two</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5136,-0.1365" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Walk east on Piccadilly past Eros into Soho.</div>
+    <div class="food-stops">
+      <div class="food-stop"><div class="food-stop-num">01</div><div class="food-stop-name">Drinks first</div><div class="food-stop-item"><strong>The French House</strong> (Dean St) — half pints only, no music, no phones. Then <strong>Coach &amp; Horses</strong> (Greek St).</div><div class="food-stop-note">Pints £6–7.</div></div>
+      <div class="food-stop"><div class="food-stop-num">02</div><div class="food-stop-name">Dinner — book ahead</div><div class="food-stop-item"><strong>Bocca di Lupo</strong> (Italian, marble counter). <strong>Kiln</strong> (Thai, live fire). <strong>Brasserie Zédel</strong> (Art Deco, gentle prices).</div></div>
+      <div class="food-stop"><div class="food-stop-num">03</div><div class="food-stop-name">Theatre option</div><div class="food-stop-item">Curtain up 19:30. TKTS on Leicester Sq for same-day 40–60% off.</div><div class="food-stop-note">£30–80 pp.</div></div>
+    </div>
+    <div class="callout callout-tip"><span class="callout-icon">🍸</span><span><strong>Nightcap:</strong> Bar Termini (Old Compton St) for a Negroni.</span></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5136,-0.1365" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<!-- 1S.9 -->
+<div class="block-card" data-day="2" data-mode="sunny" data-index="10" data-base="22:00" data-dur="30" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">22:00</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div>
+      <div class="block-title">Home — Soho → King's Cross</div>
+      <div class="block-tags"><span class="tag tag-transit">Tube</span><span class="tag tag-rest">Close</span></div>
+      <div class="block-cost-line">£2.80</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Walk to Tottenham Court Rd, Northern line 2 stops to King's Cross.</div>
+    <div class="tube-box"><div class="tube-step"><div class="tube-dot northern">N</div><div><div class="tube-line-name">Northern Line northbound</div><div class="tube-line-detail">Tottenham Court Rd → King's Cross · ~6 min</div></div></div></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="cost-summary-card">
+  <div class="cost-summary-header">💷 Day 1 Cost — 2 people</div>
+  <div class="cost-row-sm"><span>Tube fares (capped daily)</span><span class="cr-gbp-sm">~£17.80</span><span class="cr-aud-sm">~A$35</span></div>
+  <div class="cost-row-sm"><span>Westminster Abbey × 2</span><span class="cr-gbp-sm">£58</span><span class="cr-aud-sm">~A$112</span></div>
+  <div class="cost-row-sm"><span>Mayfair lunch for two</span><span class="cr-gbp-sm">£45–65</span><span class="cr-aud-sm">~A$110</span></div>
+  <div class="cost-row-sm"><span>Serpentine bar / park coffee</span><span class="cr-gbp-sm">£15–20</span><span class="cr-aud-sm">~A$35</span></div>
+  <div class="cost-row-sm"><span>Soho dinner + drinks for two</span><span class="cr-gbp-sm">£80–120</span><span class="cr-aud-sm">~A$200</span></div>
+  <div class="cost-row-sm total"><span>🧮 Total (excl. hotel)</span><span class="cr-gbp-sm">~£215–280</span><span class="cr-aud-sm">~A$490</span></div>
+</div>
+
+</div><!-- end day-2-sunny -->
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ════════════════════ DAY 2 RAINY ═════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="day-content mode-hidden" id="day-2-rainy">
+
+<div class="day-header rainy-mode">
+  <div class="day-eyebrow">Day One — Rainy Backup</div>
+  <div class="day-title">Royal &amp; Indoor London</div>
+  <div class="day-subtitle">Westminster Abbey · Churchill War Rooms · National Gallery · Soho</div>
+</div>
+
+<div class="phase-label-wrap">
+  <span class="phase-icon">⛪</span>
+  <span class="phase-txt">Phase 1 — Westminster Indoor</span>
+  <div class="phase-rule"></div>
+</div>
+
+<div class="blocks-list">
+
+<div class="block-card" data-day="2" data-mode="rainy" data-index="0" data-base="07:45" data-dur="30" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">07:45</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div><div class="block-title">Breakfast — pack the umbrella</div><div class="block-tags"><span class="tag tag-rule">Before Leaving</span></div><div class="block-cost-line">£0–15</div></div>
+    <div class="block-right"><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Two umbrellas. Waterproof shoes if possible. Dry socks in the bag — game-changer.</div>
+    <div class="callout callout-rain"><span class="callout-icon">☂️</span><span>Today's design: stay dry. Every block has indoor cover or a 5-minute outdoor sprint.</span></div>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+
+<!-- 2R.1 (NEW) — Platform 9 3/4 -->
+<div class="block-card" data-day="2" data-mode="rainy" data-index="1" data-base="08:15" data-dur="15" data-lat="51.5320" data-lon="-0.1245">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">08:15</span><span class="block-offset"></span><span class="block-dur">15 min</span></div>
+    <div>
+      <div class="block-title">⚡ Platform 9¾ at King's Cross</div>
+      <div class="block-tags"><span class="tag tag-key">⚡ HP Free</span><span class="tag tag-walk">2 min walk</span></div>
+      <div class="block-cost-line">Free · trolley photo</div>
+    </div>
+    <div class="block-right">
+      <a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5320,-0.1245" target="_blank" onclick="event.stopPropagation()">▶ Nav</a>
+      <div class="expand-btn">▾</div>
+    </div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">2-min walk from the hotel. Trolley vanishing into the brick wall on the King's Cross concourse — staff there to take the photo + costume props (scarves) provided. Free, fun, 10 min total.</div>
+    <div class="callout callout-tip"><span class="callout-icon">📸</span><span><strong>Best time:</strong> right now, 08:15 — virtually no queue. By 10:00 there's a 30+ min line.</span></div>
+    <div class="block-text"><strong>Harry Potter Shop</strong> right next to it (opens 08:00) — quick browse if your son wants Sorting Hat / wand to bring on Day 5.</div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5320,-0.1245" target="_blank"><span style="color:var(--gold)">▶</span> Platform 9¾ <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+<div class="block-card" data-day="2" data-mode="rainy" data-index="2" data-base="08:30" data-dur="20" data-lat="51.5012" data-lon="-0.1248">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">08:30</span><span class="block-offset"></span><span class="block-dur">20 min</span></div>
+    <div><div class="block-title">Tube → Westminster</div><div class="block-tags"><span class="tag tag-transit">Tube</span></div><div class="block-cost-line">£2.80</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5012,-0.1248" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Jubilee line direct. 4 stops. Exit 6 puts you across from the Abbey, 90-second sprint to the door.</div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5012,-0.1248" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="2" data-mode="rainy" data-index="3" data-base="08:50" data-dur="160" data-lat="51.4993" data-lon="-0.1273">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">08:50</span><span class="block-offset"></span><span class="block-dur">2h 40m</span></div>
+    <div><div class="block-title">Westminster Abbey — leisurely</div><div class="block-tags"><span class="tag tag-indoor">Indoor</span><span class="tag tag-key">Pre-Book</span></div><div class="block-cost-line">£29 pp</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.4993,-0.1273" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Rain = no rush. Take the verger-led tour (+£10pp, leaves every 30 min) — best money spent in London. Cloister, Chapter House, museum and treasures all on this longer ticket.</div>
+    <div class="callout callout-rain"><span class="callout-icon">☂️</span><span>Cloisters are partially open-air covered walkways — the most atmospheric corner of the building when it's raining outside.</span></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.4993,-0.1273" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="phase-label-wrap">
+  <span class="phase-icon">🏛️</span>
+  <span class="phase-txt">Phase 2 — Churchill War Rooms + Lunch</span>
+  <div class="phase-rule"></div>
+</div>
+
+<div class="blocks-list">
+
+<div class="block-card" data-day="2" data-mode="rainy" data-index="4" data-base="11:30" data-dur="90" data-lat="51.4998" data-lon="-0.1294">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">11:30</span><span class="block-offset"></span><span class="block-dur">1.5 hrs</span></div>
+    <div><div class="block-title">Lunch — Westminster Arms or St James's Café</div><div class="block-tags"><span class="tag tag-food">Food</span><span class="tag tag-indoor">Indoor</span></div><div class="block-cost-line">£20–30 pp</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.4998,-0.1294" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">5-min walk from the Abbey. <strong>Westminster Arms</strong> (Storey's Gate) — classic MP's pub, fish &amp; chips and pies. <strong>The Speaker</strong> on Great Peter St is the other local option.</div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.4998,-0.1294" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="2" data-mode="rainy" data-index="5" data-base="13:00" data-dur="120" data-lat="51.5021" data-lon="-0.1292">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">13:00</span><span class="block-offset"></span><span class="block-dur">2 hrs</span></div>
+    <div><div class="block-title">Churchill War Rooms</div><div class="block-tags"><span class="tag tag-indoor">Indoor</span><span class="tag tag-peak">⭐ Peak</span><span class="tag tag-key">Pre-Book</span></div><div class="block-cost-line">£32 pp · ~A$62</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5021,-0.1292" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">The bunker where Churchill ran WWII, preserved exactly as it was when the lights went out in 1945. Plus the Churchill Museum. Entirely underground, gripping, and an absolute London highlight.</div>
+    <div class="callout callout-tip"><span class="callout-icon">🎟️</span><span><strong>Pre-book timed entry online</strong> — it's small and gets crammed on rainy days. 13:00 slot is ideal.</span></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5021,-0.1292" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="phase-label-wrap">
+  <span class="phase-icon">🎨</span>
+  <span class="phase-txt">Phase 3 — National Gallery</span>
+  <div class="phase-rule"></div>
+</div>
+
+<div class="blocks-list">
+
+<div class="block-card" data-day="2" data-mode="rainy" data-index="6" data-base="15:00" data-dur="180" data-lat="51.5089" data-lon="-0.1283">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">15:00</span><span class="block-offset"></span><span class="block-dur">3 hrs</span></div>
+    <div><div class="block-title">National Gallery — full visit</div><div class="block-tags"><span class="tag tag-indoor">Indoor</span><span class="tag tag-museum">Free</span></div><div class="block-cost-line">Free</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5089,-0.1283" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">10-min walk through Whitehall (mostly under awnings if planned right) from War Rooms. 2,300 paintings, 700 years of European art. Rain day = full 3 hours, not the rushed 2.</div>
+    <div class="callout callout-tip"><span class="callout-icon">☕</span><span>Coffee break midway at the Sainsbury Wing espresso bar — colonnade view over a wet Trafalgar Square.</span></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5089,-0.1283" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="phase-label-wrap">
+  <span class="phase-icon">🌃</span>
+  <span class="phase-txt">Phase 4 — Soho (same plan)</span>
+  <div class="phase-rule"></div>
+</div>
+
+<div class="blocks-list">
+
+<div class="block-card" data-day="2" data-mode="rainy" data-index="7" data-base="18:00" data-dur="240" data-lat="51.5136" data-lon="-0.1365">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">18:00</span><span class="block-offset"></span><span class="block-dur">4 hrs</span></div>
+    <div><div class="block-title">Soho dinner + drinks (covered route)</div><div class="block-tags"><span class="tag tag-food">Food</span><span class="tag tag-night">Night</span></div><div class="block-cost-line">£60–100 for two</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5136,-0.1365" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">5-min walk up Charing Cross Rd from the Gallery — stays mostly under shop awnings. Same Soho food plan as sunny mode.</div>
+    <div class="callout callout-rain"><span class="callout-icon">🌧️</span><span><strong>Wet-night upgrade:</strong> book a window seat at Brasserie Zédel — Art Deco vaulted basement, you forget the weather entirely.</span></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5136,-0.1365" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="2" data-mode="rainy" data-index="8" data-base="22:00" data-dur="30" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">22:00</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div><div class="block-title">Tube home</div><div class="block-tags"><span class="tag tag-transit">Tube</span><span class="tag tag-rest">Close</span></div><div class="block-cost-line">£2.80</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Tottenham Court Rd → Northern line → King's Cross. 2 stops.</div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+</div><!-- end day-2-rainy -->
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ════════════════════ DAY 3 SUNNY ═════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="day-content day-hidden" id="day-3-sunny">
+
+<div class="day-header">
+  <div class="day-eyebrow">Day Two — Sunny</div>
+  <div class="day-title">Notting Hill · Museum · Covent Garden</div>
+  <div class="day-subtitle">Pastel houses · world-class art · West End buzz</div>
+</div>
+
+<div class="phase-label-wrap"><span class="phase-icon">🏠</span><span class="phase-txt">Phase 1 — Notting Hill</span><div class="phase-rule"></div></div>
+
+<div class="blocks-list">
+
+<div class="block-card" data-day="3" data-mode="sunny" data-index="0" data-base="08:00" data-dur="30" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">08:00</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div><div class="block-title">Breakfast at hotel / King's Cross</div><div class="block-tags"><span class="tag tag-rule">Before Leaving</span></div><div class="block-cost-line">£0–15</div></div>
+    <div class="block-right"><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Lighter day — quick breakfast is fine.</div>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="3" data-mode="sunny" data-index="1" data-base="08:30" data-dur="30" data-lat="51.5089" data-lon="-0.1969">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">08:30</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div><div class="block-title">Tube → Notting Hill Gate</div><div class="block-tags"><span class="tag tag-transit">Tube</span></div><div class="block-cost-line">£2.80</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5089,-0.1969" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Circle/H&amp;C westbound direct, 7 stops.</div>
+    <div class="tube-box"><div class="tube-step"><div class="tube-dot circle">C</div><div><div class="tube-line-name">Circle Line westbound</div><div class="tube-line-detail">King's Cross → Notting Hill Gate · ~22 min</div></div></div></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5089,-0.1969" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="3" data-mode="sunny" data-index="2" data-base="09:00" data-dur="90" data-lat="51.5169" data-lon="-0.2065">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">09:00</span><span class="block-offset"></span><span class="block-dur">1.5 hrs</span></div>
+    <div><div class="block-title">Notting Hill pastel streets</div><div class="block-tags"><span class="tag tag-walk">Walk</span><span class="tag tag-key">Photo</span></div><div class="block-cost-line">Free</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5169,-0.2065" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">North up Pembridge Rd. Pastel terraces are off Portobello.</div>
+    <div class="steps-box">
+      <div class="steps-header">📸 Best streets</div>
+      <div class="steps-body">
+        <div class="step-row"><div class="step-num">1</div><div class="step-content"><strong>Lancaster Road</strong>Classic candy-coloured row.</div></div>
+        <div class="step-row"><div class="step-num">2</div><div class="step-content"><strong>Elgin Crescent</strong>Stucco terraces. Quieter than Lancaster.</div></div>
+        <div class="step-row"><div class="step-num">3</div><div class="step-content"><strong>St Luke's Mews</strong>Pink <em>Love Actually</em> house.</div></div>
+        <div class="step-row"><div class="step-num stop">⚠</div><div class="step-content"><strong>Respect.</strong> Real homes. No tripods.</div></div>
+      </div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5169,-0.2065" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="3" data-mode="sunny" data-index="3" data-base="10:30" data-dur="120" data-lat="51.5160" data-lon="-0.2057">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">10:30</span><span class="block-offset"></span><span class="block-dur">2 hrs</span></div>
+    <div><div class="block-title">Portobello Road Market</div><div class="block-tags"><span class="tag tag-key">Market</span></div><div class="block-cost-line">Free to browse</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5160,-0.2057" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Two miles of stalls. Walk north — character changes.</div>
+    <div class="steps-box">
+      <div class="steps-header">🛍 Working north</div>
+      <div class="steps-body">
+        <div class="step-row"><div class="step-num">1</div><div class="step-content"><strong>South end</strong>Antiques + silver. Best Sat.</div></div>
+        <div class="step-row"><div class="step-num">2</div><div class="step-content"><strong>Middle (Elgin Cres)</strong>Produce, cheese, daily.</div></div>
+        <div class="step-row"><div class="step-num">3</div><div class="step-content"><strong>Westway flyover</strong>Vintage, records, hot food.</div></div>
+        <div class="step-row"><div class="step-num">4</div><div class="step-content"><strong>Golborne Rd north end</strong>Lisboa Pâtisserie — best pastel de nata in London.</div></div>
+      </div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5160,-0.2057" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="3" data-mode="sunny" data-index="4" data-base="12:30" data-dur="90" data-lat="51.5167" data-lon="-0.2030">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">12:30</span><span class="block-offset"></span><span class="block-dur">1.5 hrs</span></div>
+    <div><div class="block-title">Lunch on Portobello</div><div class="block-tags"><span class="tag tag-food">Food</span></div><div class="block-cost-line">£15–30 pp</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5167,-0.2030" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="food-stops">
+      <div class="food-stop"><div class="food-stop-num">01</div><div class="food-stop-name">Farm Girl</div><div class="food-stop-item">Brunch institution. Rose lattes, courtyard.</div><div class="food-stop-note">£18–28 pp.</div></div>
+      <div class="food-stop"><div class="food-stop-num">02</div><div class="food-stop-name">Eggbreak</div><div class="food-stop-item">Quieter, around corner from tube.</div><div class="food-stop-note">£15–24 pp.</div></div>
+      <div class="food-stop"><div class="food-stop-num">03</div><div class="food-stop-name">Market street food</div><div class="food-stop-item">Paella, bagels, oysters. Eat standing.</div><div class="food-stop-note">£8–15 pp.</div></div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5167,-0.2030" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="phase-label-wrap"><span class="phase-icon">🎨</span><span class="phase-txt">Phase 2 — National Gallery</span><div class="phase-rule"></div></div>
+
+<div class="blocks-list">
+
+<div class="block-card" data-day="3" data-mode="sunny" data-index="5" data-base="14:00" data-dur="30" data-lat="51.5080" data-lon="-0.1281">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">14:00</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div><div class="block-title">Tube → Trafalgar Square</div><div class="block-tags"><span class="tag tag-transit">Tube</span></div><div class="block-cost-line">£2.80</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5080,-0.1281" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Central line east to Tottenham Court Rd, then walk 10 min south on Charing Cross Rd.</div>
+    <div class="tube-box"><div class="tube-step"><div class="tube-dot central">C</div><div><div class="tube-line-name">Central eastbound</div><div class="tube-line-detail">Notting Hill Gate → Tottenham Court Rd · 6 stops · ~14 min</div></div></div></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5080,-0.1281" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="3" data-mode="sunny" data-index="6" data-base="14:30" data-dur="150" data-lat="51.5089" data-lon="-0.1283">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">14:30</span><span class="block-offset"></span><span class="block-dur">2.5 hrs</span></div>
+    <div><div class="block-title">National Gallery</div><div class="block-tags"><span class="tag tag-museum">Free</span><span class="tag tag-peak">⭐ Peak</span></div><div class="block-cost-line">Free</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5089,-0.1283" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">2,300 paintings. Pick a route. With 2.5 hrs you can do the full highlights loop comfortably.</div>
+    <div class="steps-box">
+      <div class="steps-header">🎨 Highlights route</div>
+      <div class="steps-body">
+        <div class="step-row"><div class="step-num">1</div><div class="step-content"><strong>Sainsbury Wing</strong>Van Eyck, Uccello.</div></div>
+        <div class="step-row"><div class="step-num">2</div><div class="step-content"><strong>West Wing</strong>Leonardo, Holbein.</div></div>
+        <div class="step-row"><div class="step-num">3</div><div class="step-content"><strong>North Wing</strong>Rembrandt, Vermeer, Caravaggio.</div></div>
+        <div class="step-row"><div class="step-num">4</div><div class="step-content"><strong>East Wing</strong>Turner, Monet, Van Gogh.</div></div>
+      </div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5089,-0.1283" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="phase-label-wrap"><span class="phase-icon">🎭</span><span class="phase-txt">Phase 3 — Covent Garden Evening</span><div class="phase-rule"></div></div>
+
+<div class="blocks-list">
+
+<div class="block-card" data-day="3" data-mode="sunny" data-index="7" data-base="17:00" data-dur="120" data-lat="51.5117" data-lon="-0.1226">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">17:00</span><span class="block-offset"></span><span class="block-dur">2 hrs</span></div>
+    <div><div class="block-title">Covent Garden + Neal's Yard</div><div class="block-tags"><span class="tag tag-key">Atmosphere</span></div><div class="block-cost-line">Free</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5117,-0.1226" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Walk up St Martin's Lane (10 min). Detour through Cecil Court if you like rare books.</div>
+    <div class="steps-box">
+      <div class="steps-header">🎭 The loop</div>
+      <div class="steps-body">
+        <div class="step-row"><div class="step-num">1</div><div class="step-content"><strong>Apple Market</strong>Crafts in the old hall.</div></div>
+        <div class="step-row"><div class="step-num">2</div><div class="step-content"><strong>West Piazza performers</strong>Opera singers under the portico. Throw money.</div></div>
+        <div class="step-row"><div class="step-num">3</div><div class="step-content"><strong>Neal's Yard</strong>Rainbow courtyard hidden in an alley.</div></div>
+        <div class="step-row"><div class="step-num">4</div><div class="step-content"><strong>Seven Dials</strong>Indie shops, star-shaped junction.</div></div>
+      </div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5145,-0.1268" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="3" data-mode="sunny" data-index="8" data-base="19:00" data-dur="180" data-lat="51.5128" data-lon="-0.1243">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">19:00</span><span class="block-offset"></span><span class="block-dur">3 hrs</span></div>
+    <div><div class="block-title">Dinner — pub or pre-theatre</div><div class="block-tags"><span class="tag tag-food">Food</span><span class="tag tag-night">Evening</span></div><div class="block-cost-line">£25–60 pp</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5128,-0.1243" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="food-stops">
+      <div class="food-stop"><div class="food-stop-num">01</div><div class="food-stop-name">Lamb &amp; Flag (Rose St)</div><div class="food-stop-item">Hidden 17th-c pub. Dickens drank here.</div><div class="food-stop-note">£14–22.</div></div>
+      <div class="food-stop"><div class="food-stop-num">02</div><div class="food-stop-name">The Harp (Chandos Pl)</div><div class="food-stop-item">Tiny multi-award pub. Cask ales, Scotch eggs.</div><div class="food-stop-note">£12–18.</div></div>
+      <div class="food-stop"><div class="food-stop-num">03</div><div class="food-stop-name">Pre-theatre — Frenchie / Balthazar / Dishoom</div><div class="food-stop-item">Set menus from £35. Book.</div></div>
+    </div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5128,-0.1243" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="3" data-mode="sunny" data-index="9" data-base="22:00" data-dur="30" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">22:00</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div><div class="block-title">Tube home</div><div class="block-tags"><span class="tag tag-transit">Tube</span><span class="tag tag-rest">Close</span></div><div class="block-cost-line">£2.80</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Piccadilly line direct, 3 stops. If Covent Garden tube is jammed, walk 4 min to Leicester Sq.</div>
+    <div class="tube-box"><div class="tube-step"><div class="tube-dot piccadilly">P</div><div><div class="tube-line-name">Piccadilly eastbound</div><div class="tube-line-detail">Covent Garden → King's Cross · ~8 min</div></div></div></div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5305,-0.1235" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+</div>
+
+<div class="cost-summary-card">
+  <div class="cost-summary-header">💷 Day 2 Cost — 2 people</div>
+  <div class="cost-row-sm"><span>Tube fares (capped)</span><span class="cr-gbp-sm">~£13</span><span class="cr-aud-sm">~A$25</span></div>
+  <div class="cost-row-sm"><span>Notting Hill lunch</span><span class="cr-gbp-sm">£35–55</span><span class="cr-aud-sm">~A$90</span></div>
+  <div class="cost-row-sm"><span>Market browse / pastéis</span><span class="cr-gbp-sm">£10–20</span><span class="cr-aud-sm">~A$30</span></div>
+  <div class="cost-row-sm"><span>National Gallery donation</span><span class="cr-gbp-sm">£0–10</span><span class="cr-aud-sm">~A$15</span></div>
+  <div class="cost-row-sm"><span>Covent Garden coffees</span><span class="cr-gbp-sm">£10–20</span><span class="cr-aud-sm">~A$30</span></div>
+  <div class="cost-row-sm"><span>Dinner for two</span><span class="cr-gbp-sm">£55–120</span><span class="cr-aud-sm">~A$170</span></div>
+  <div class="cost-row-sm total"><span>🧮 Total</span><span class="cr-gbp-sm">~£125–230</span><span class="cr-aud-sm">~A$345</span></div>
+</div>
+
+</div><!-- end day-3-sunny -->
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ════════════════════ DAY 3 RAINY ═════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="day-content day-hidden mode-hidden" id="day-3-rainy">
+
+<div class="day-header rainy-mode">
+  <div class="day-eyebrow">Day Two — Rainy Backup</div>
+  <div class="day-title">British Museum · V&amp;A · Covent Garden</div>
+  <div class="day-subtitle">Skip Notting Hill — heavy outdoor day swapped for indoor culture</div>
+</div>
+
+<div class="phase-label-wrap"><span class="phase-icon">🏛️</span><span class="phase-txt">Phase 1 — British Museum</span><div class="phase-rule"></div></div>
+
+<div class="blocks-list">
+
+<div class="block-card" data-day="3" data-mode="rainy" data-index="0" data-base="08:00" data-dur="30" data-lat="51.5305" data-lon="-0.1235">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">08:00</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div><div class="block-title">Breakfast — slow start</div><div class="block-tags"><span class="tag tag-rule">Before Leaving</span></div><div class="block-cost-line">£0–15</div></div>
+    <div class="block-right"><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">Rain day. British Museum opens 10:00 so no rush. Linger over coffee.</div>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="3" data-mode="rainy" data-index="1" data-base="09:30" data-dur="30" data-lat="51.5194" data-lon="-0.1270">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">09:30</span><span class="block-offset"></span><span class="block-dur">30 min</span></div>
+    <div><div class="block-title">Walk to British Museum</div><div class="block-tags"><span class="tag tag-walk">Walk · 15 min</span></div><div class="block-cost-line">Free</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5194,-0.1270" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">15-min walk south through Bloomsbury — quieter streets, less exposed to wind than main roads. Or one stop Piccadilly to Russell Sq if it's really horrible.</div>
+    <a class="nav-full-btn" href="https://www.google.com/maps?q=51.5194,-0.1270" target="_blank"><span style="color:var(--gold)">▶</span> Navigate <span class="nav-arrow">↗</span></a>
+    <div class="block-actions"><button class="btn-skip" onclick="toggleSkip(this)">✕ Skip this step</button></div>
+  </div>
+</div>
+
+<div class="block-card" data-day="3" data-mode="rainy" data-index="2" data-base="10:00" data-dur="210" data-lat="51.5194" data-lon="-0.1270">
+  <div class="block-head" onclick="toggleExpand(this)">
+    <div class="block-time"><span class="block-clock">10:00</span><span class="block-offset"></span><span class="block-dur">3.5 hrs</span></div>
+    <div><div class="block-title">British Museum</div><div class="block-tags"><span class="tag tag-indoor">Indoor</span><span class="tag tag-museum">Free</span><span class="tag tag-peak">⭐⭐ Peak</span></div><div class="block-cost-line">Free</div></div>
+    <div class="block-right"><a class="nav-mini-btn" href="https://www.google.com/maps?q=51.5194,-0.1270" target="_blank" onclick="event.stopPropagation()">▶ Nav</a><div class="expand-btn">▾</div></div>
+  </div>
+  <div class="block-body">
+    <div class="block-text">8 million objects. Pick your big rooms.</div>
+    <div class="steps-box">
+      <div class="steps-header">📍 Must-see rooms</div>
+      <div class="steps-body">
+        <div class="step-row"><div class="step-num">1</div><div class="step-content"><strong>Great Court &amp; Reading Room</strong>Norman Foster's glass-roofed central court. Architectural showpiece.</div></div>
+        <div class="step-row"><div class="step-num">2</div><div class="step-content"><strong>Rosetta Stone (Room 4)</strong>Famous, busy, get there first.</div></div>
+        <div class="step-row"><div class="step-num">3</div><div class="step-content"><strong>Parthenon Marbles (Room 18)</strong>Contested but extraordinary.</div></div>
+        <div class="step-row"><div class="step-num">4</div><div class="step-content"><strong>Egyptian Mummies (Rooms 62-63)</strong>Crowd magnet but worth it.</div></div>
+        <div class="step-row"><div class="step-num">5</div><div class="step-content"><strong>Sutton Hoo (Room 41)</strong>Anglo-Saxon ship burial helmet. Quieter than the big rooms.</div></div>
+      </div>
+    </div>
+    <div class="callo
